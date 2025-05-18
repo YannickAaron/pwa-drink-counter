@@ -3,8 +3,18 @@
  * for Docker builds.
  */
 import "./src/env.js";
+import withPWA from "next-pwa";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+  // Other Next.js config options
+};
 
-export default config;
+const nextConfig = withPWA({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+})(config);
+
+export default nextConfig;

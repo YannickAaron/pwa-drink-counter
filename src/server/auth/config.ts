@@ -1,5 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import DiscordProvider from "next-auth/providers/discord";
 
 import { db } from "~/server/db";
@@ -32,7 +33,29 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    DiscordProvider({
+      clientId: process.env.AUTH_DISCORD_ID || "",
+      clientSecret: process.env.AUTH_DISCORD_SECRET || "",
+    }),
+    CredentialsProvider({
+      name: "Demo Account",
+      credentials: {
+        username: { label: "Username", type: "text", placeholder: "demo" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // This is a demo account for testing purposes
+        if (credentials?.username === "demo" && credentials?.password === "demo") {
+          return {
+            id: "demo-user",
+            name: "Demo User",
+            email: "demo@example.com",
+            image: null
+          };
+        }
+        return null;
+      }
+    }),
     /**
      * ...add more providers here.
      *
@@ -45,12 +68,22 @@ export const authConfig = {
   ],
   adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, user }) => ({
+    session: ({ session, user, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: user.id,
+        id: user?.id || token?.sub || "demo-user",
       },
     }),
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    }
   },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.AUTH_SECRET,
 } satisfies NextAuthConfig;
