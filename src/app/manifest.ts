@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Drink Counter',
-    short_name: 'DrinkCount',
-    description: 'Track your drinking habits and view statistics',
+    name: 'SipStats',
+    short_name: 'SipStats',
+    description: 'Track your drinking habits and view detailed statistics',
     start_url: '/',
     display: 'standalone',
-    background_color: '#2e026d',
-    theme_color: '#2e026d',
+    background_color: '#08415C',
+    theme_color: '#08415C',
     orientation: 'portrait',
     icons: [
       {
