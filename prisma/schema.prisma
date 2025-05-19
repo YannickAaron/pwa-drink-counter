@@ -14,18 +14,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
 // Necessary for Next auth
 model Account {
     id                       String  @id @default(cuid())
@@ -55,14 +43,16 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
+    id            String         @id @default(cuid())
     name          String?
-    email         String?   @unique
+    email         String?        @unique
     emailVerified DateTime?
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    profile       UserProfile?
+    drinkSessions DrinkSession[]
+    onboarded     Boolean        @default(false)
 }
 
 model VerificationToken {
@@ -71,4 +61,65 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+// Drink Counter App Models
+
+model UserProfile {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    
+    // User profile data
+    nickname  String?
+    age       Int?
+    gender    String?
+    weight    Float?   // in kg
+    
+    // Relation to User
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String   @unique
+}
+
+model DrinkSession {
+    id        String       @id @default(cuid())
+    createdAt DateTime     @default(now())
+    updatedAt DateTime     @updatedAt
+    date      DateTime     @default(now())
+    
+    // Relation to User
+    user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    
+    // Relation to DrinkEntry
+    drinks    DrinkEntry[]
+    
+    // Session stats (calculated)
+    totalDrinks Int         @default(0)
+    totalAlcohol Float      @default(0) // in grams
+    
+    @@index([userId, date])
+}
+
+model DrinkEntry {
+    id        String      @id @default(cuid())
+    createdAt DateTime    @default(now())
+    timestamp DateTime    @default(now())
+    
+    // Drink details
+    drinkType DrinkType
+    volume    Int         // in ml
+    
+    // Relation to DrinkSession
+    session   DrinkSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+    sessionId String
+    
+    @@index([sessionId, timestamp])
+}
+
+enum DrinkType {
+    BEER
+    WINE
+    COCKTAIL
+    SHOT
 }

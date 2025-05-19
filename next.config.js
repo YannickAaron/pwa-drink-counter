@@ -5,6 +5,14 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const nextConfig = {
+  // Other Next.js config options
+  serverExternalPackages: ["@prisma/client"],
+  // Configure server options
+  experimental: {
+    serverMinification: false,
+  },
+};
 
-export default config;
+// Export the final config
+export default nextConfig;

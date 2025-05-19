@@ -1,5 +1,6 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
 import DiscordProvider from "next-auth/providers/discord";
 
 import { db } from "~/server/db";
@@ -32,7 +33,46 @@ declare module "next-auth" {
  */
 export const authConfig = {
   providers: [
-    DiscordProvider,
+    DiscordProvider({
+      clientId: process.env.AUTH_DISCORD_ID || "",
+      clientSecret: process.env.AUTH_DISCORD_SECRET || "",
+    }),
+    CredentialsProvider({
+      id: "demo-credentials",
+      name: "Demo Account",
+      credentials: {
+        username: { label: "Username", type: "text", placeholder: "demo" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        // This is a demo account for testing purposes
+        if (credentials?.username === "demo" && credentials?.password === "demo") {
+          // Find the demo user in the database
+          const demoUser = await db.user.findUnique({
+            where: { id: "demo-user" },
+          });
+          
+          if (demoUser) {
+            return {
+              id: demoUser.id,
+              name: demoUser.name,
+              email: demoUser.email,
+              image: demoUser.image
+            };
+          }
+          
+          // If demo user doesn't exist in the database, return a basic user object
+          // The session callback will handle the ID
+          return {
+            id: "demo-user",
+            name: "Demo User",
+            email: "demo@example.com",
+            image: null
+          };
+        }
+        return null;
+      }
+    }),
     /**
      * ...add more providers here.
      *
@@ -45,12 +85,32 @@ export const authConfig = {
   ],
   adapter: PrismaAdapter(db),
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
-    }),
+    session: ({ session, user, token }) => {
+      // Get the user ID from the user object, token, or use demo-user as fallback
+      const userId = user?.id || token?.sub || token?.id || "demo-user";
+      
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: userId as string,
+        },
+      };
+    },
+    jwt: ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    signIn: async ({ user }) => {
+      // Always allow sign-in
+      return true;
+    }
   },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.AUTH_SECRET,
+  trustHost: true,
 } satisfies NextAuthConfig;
