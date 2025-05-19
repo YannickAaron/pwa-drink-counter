@@ -24,12 +24,6 @@ export default async function Home() {
             >
               Sign in
             </Link>
-            <Link
-              href="/api/auth/demo-login"
-              className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-            >
-              Demo Login
-            </Link>
           </div>
         </div>
       </div>
@@ -43,10 +37,10 @@ export default async function Home() {
       redirect("/onboarding");
       return null;
     }
-    
+
     // Check if user has completed onboarding
     const user = await api.profile.getProfile();
-    
+
     // If user doesn't have a profile, redirect to onboarding
     if (!user) {
       redirect("/onboarding");
