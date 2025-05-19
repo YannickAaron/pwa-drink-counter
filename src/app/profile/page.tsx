@@ -15,7 +15,7 @@ export default async function ProfilePage() {
   }
 
   // Prefetch profile data
-  await api.profile.getProfile.prefetch();
+  await api.profile.getProfile();
 
   return (
     <HydrateClient>

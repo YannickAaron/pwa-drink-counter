@@ -25,10 +25,10 @@ export default async function Home() {
               Sign in
             </Link>
             <Link
-              href="/demo"
+              href="/api/auth/demo-login"
               className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
             >
-              Try Demo
+              Demo Login
             </Link>
           </div>
         </div>
@@ -36,18 +36,32 @@ export default async function Home() {
     );
   }
 
-  // Check if user has completed onboarding
-  const isOnboarded = await api.profile.isOnboarded.query();
-  
-  // If not onboarded, redirect to onboarding
-  if (!isOnboarded) {
+  try {
+    // Check if the user is marked as onboarded in the database
+    const dbUser = await api.profile.getUserOnboardedStatus();
+    if (!dbUser?.onboarded) {
+      redirect("/onboarding");
+      return null;
+    }
+    
+    // Check if user has completed onboarding
+    const user = await api.profile.getProfile();
+    
+    // If user doesn't have a profile, redirect to onboarding
+    if (!user) {
+      redirect("/onboarding");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error checking onboarding status:", error);
+    // If there's an error, assume the user needs to be onboarded
     redirect("/onboarding");
     return null;
   }
 
   // Prefetch current session data
-  await api.drinkSession.getCurrentSession.prefetch();
-  await api.drinkSession.getRecentDrinks.prefetch({ limit: 10 });
+  await api.drinkSession.getCurrentSession();
+  await api.drinkSession.getRecentDrinks({ limit: 10 });
 
   return (
     <HydrateClient>

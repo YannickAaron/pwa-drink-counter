@@ -22,35 +22,21 @@ const volumePresets = {
   [DrinkType.SHOT]: [20, 40, 60],
 };
 
-interface DrinkTrackerProps {
-  isDemoMode?: boolean;
-}
+interface DrinkTrackerProps {}
 
-interface DemoDrink {
-  id: string;
-  drinkType: DrinkType;
-  volume: number;
-  timestamp: Date;
-}
-
-export function DrinkTracker({ isDemoMode = false }: DrinkTrackerProps) {
+export function DrinkTracker({}: DrinkTrackerProps) {
   // State for drink type and volume
   const [selectedDrinkType, setSelectedDrinkType] = useState<DrinkType>(DrinkType.BEER);
   const [volume, setVolume] = useState<number>(330);
   const [isAddingDrink, setIsAddingDrink] = useState(false);
-  const [demoDrinks, setDemoDrinks] = useState<DemoDrink[]>([]);
 
-  // Get current session data (only if not in demo mode)
-  const { data: currentSession } = api.drinkSession.getCurrentSession.useQuery(
-    undefined,
-    { enabled: !isDemoMode }
-  );
+  // Get current session data
+  const { data: currentSession } = api.drinkSession.getCurrentSession.useQuery();
   
-  // Get recent drinks (only if not in demo mode)
+  // Get recent drinks
   const { data: recentDrinks, refetch: refetchRecentDrinks } = 
     api.drinkSession.getRecentDrinks.useQuery(
-      { limit: 10 },
-      { enabled: !isDemoMode }
+      { limit: 10 }
     );
 
   // Add drink mutation
@@ -76,23 +62,11 @@ export function DrinkTracker({ isDemoMode = false }: DrinkTrackerProps) {
 
     setIsAddingDrink(true);
     try {
-      if (isDemoMode) {
-        // In demo mode, just add to local state
-        const newDrink: DemoDrink = {
-          id: `demo-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          drinkType: selectedDrinkType,
-          volume,
-          timestamp: new Date(),
-        };
-        setDemoDrinks((prev) => [newDrink, ...prev].slice(0, 10));
-      } else {
-        // In normal mode, use the API
-        await addDrink.mutateAsync({
-          drinkType: selectedDrinkType,
-          volume,
-          sessionId: currentSession?.id,
-        });
-      }
+      await addDrink.mutateAsync({
+        drinkType: selectedDrinkType,
+        volume,
+        sessionId: currentSession?.id,
+      });
     } catch (error) {
       console.error("Error adding drink:", error);
     } finally {
@@ -179,50 +153,14 @@ export function DrinkTracker({ isDemoMode = false }: DrinkTrackerProps) {
         <div className="mb-3 flex items-center justify-between">
           <h3 className="text-lg font-medium">Recent Drinks</h3>
           <Link
-            href={isDemoMode ? "/demo/stats" : "/stats"}
+            href="/stats"
             className="text-sm text-indigo-400 hover:text-indigo-300"
           >
             View Stats 📊
           </Link>
         </div>
 
-        {isDemoMode ? (
-          demoDrinks.length > 0 ? (
-            <ul className="space-y-2">
-              {demoDrinks.map((drink) => (
-                <li
-                  key={drink.id}
-                  className="flex items-center justify-between rounded-md bg-white/5 p-3"
-                >
-                  <div className="flex items-center">
-                    <span className="mr-2 text-xl">
-                      {drink.drinkType === DrinkType.BEER
-                        ? "🍺"
-                        : drink.drinkType === DrinkType.WINE
-                        ? "🍷"
-                        : drink.drinkType === DrinkType.COCKTAIL
-                        ? "🍸"
-                        : "🥃"}
-                    </span>
-                    <div>
-                      <p className="font-medium">
-                        {drink.drinkType.charAt(0) + drink.drinkType.slice(1).toLowerCase()}
-                      </p>
-                      <p className="text-sm text-white/70">{drink.volume}ml</p>
-                    </div>
-                  </div>
-                  <span className="text-sm text-white/70">
-                    {formatTime(drink.timestamp)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="py-4 text-center text-white/50">
-              No drinks logged yet. Add your first one!
-            </p>
-          )
-        ) : recentDrinks && recentDrinks.length > 0 ? (
+        {recentDrinks && recentDrinks.length > 0 ? (
           <ul className="space-y-2">
             {recentDrinks.map((drink) => (
               <li

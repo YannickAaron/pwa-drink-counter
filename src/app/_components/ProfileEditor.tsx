@@ -30,18 +30,19 @@ export function ProfileEditor() {
   useEffect(() => {
     if (profile) {
       reset({
-        nickname: profile.nickname,
-        age: profile.age,
+        nickname: profile.nickname ?? undefined,
+        age: profile.age ?? undefined,
         gender: profile.gender ?? "",
         weight: profile.weight ?? undefined,
       });
     }
   }, [profile, reset]);
 
+  const utils = api.useUtils();
   const updateProfile = api.profile.upsertProfile.useMutation({
     onSuccess: () => {
       // Refetch profile data
-      void api.profile.getProfile.invalidate();
+      void utils.profile.getProfile.invalidate();
     },
   });
 

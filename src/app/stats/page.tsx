@@ -15,7 +15,7 @@ export default async function StatsPage() {
   }
 
   // Check if user has completed onboarding
-  const isOnboarded = await api.profile.isOnboarded.query();
+  const isOnboarded = await api.profile.isOnboarded();
   
   // If not onboarded, redirect to onboarding
   if (!isOnboarded) {
@@ -24,8 +24,8 @@ export default async function StatsPage() {
   }
 
   // Prefetch stats data
-  await api.statistics.getCurrentSessionStats.prefetch({});
-  await api.statistics.getAllTimeStats.prefetch();
+  await api.statistics.getCurrentSessionStats({});
+  await api.statistics.getAllTimeStats();
 
   return (
     <HydrateClient>

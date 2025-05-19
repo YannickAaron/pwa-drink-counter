@@ -54,7 +54,17 @@ export const profileRouter = createTRPCRouter({
       return profile;
     }),
 
-  // Check if the user has completed onboarding
+  // Get the user's onboarded status
+  getUserOnboardedStatus: protectedProcedure.query(async ({ ctx }) => {
+    const user = await ctx.db.user.findUnique({
+      where: { id: ctx.session.user.id },
+      select: { id: true, onboarded: true },
+    });
+
+    return user;
+  }),
+
+  // Check if the user has completed onboarding (legacy procedure)
   isOnboarded: protectedProcedure.query(async ({ ctx }) => {
     const user = await ctx.db.user.findUnique({
       where: { id: ctx.session.user.id },
