@@ -7,8 +7,8 @@ import { TRPCReactProvider } from "~/trpc/react";
 import { PWAProvider } from "./_components/PWAProvider";
 
 export const metadata: Metadata = {
-  title: "SipStats - Track Your Drinks",
-  description: "Track your drinking habits and view detailed statistics with SipStats",
+  title: "Drink Counter",
+  description: "Track your drinking habits and view statistics",
   icons: [
     { rel: "icon", url: "/favicon.ico" },
     { rel: "apple-touch-icon", url: "/icons/icon-192x192.png" },
@@ -17,16 +17,22 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "SipStats",
+    title: "Drink Counter",
   },
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  themeColor: "#2e026d",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#08415C",
+  themeColor: "#2e026d",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  userScalable: false,
 };
 
 const geist = Geist({
@@ -40,13 +46,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <head>
-        <meta name="application-name" content="SipStats" />
+        <meta name="application-name" content="Drink Counter" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="SipStats" />
+        <meta name="apple-mobile-web-app-title" content="Drink Counter" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#08415C" />
+        <meta name="theme-color" content="#2e026d" />
         <script src="/sw-register.js" defer></script>
       </head>
       <body>
