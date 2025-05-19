@@ -2,7 +2,10 @@
  * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
  * for Docker builds.
  */
-import "./src/env.js";
+// @ts-check
+
+// Load environment variables
+import("./src/env.js");
 
 /** @type {import("next").NextConfig} */
 const nextConfig = {
@@ -11,6 +14,20 @@ const nextConfig = {
   // Configure server options
   experimental: {
     serverMinification: false,
+  },
+  // PWA configuration
+  headers: async () => {
+    return [
+      {
+        source: '/manifest.json',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/manifest+json',
+          },
+        ],
+      },
+    ];
   },
 };
 
