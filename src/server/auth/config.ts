@@ -34,44 +34,69 @@ declare module "next-auth" {
 export const authConfig = {
   providers: [
     DiscordProvider({
-      clientId: process.env.AUTH_DISCORD_ID || "",
-      clientSecret: process.env.AUTH_DISCORD_SECRET || "",
+      clientId: process.env.AUTH_DISCORD_ID,
+      clientSecret: process.env.AUTH_DISCORD_SECRET,
     }),
     CredentialsProvider({
       id: "demo-credentials",
       name: "Demo Account",
       credentials: {
         username: { label: "Username", type: "text", placeholder: "demo" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         // This is a demo account for testing purposes
-        if (credentials?.username === "demo" && credentials?.password === "demo") {
-          // Find the demo user in the database
-          const demoUser = await db.user.findUnique({
-            where: { id: "demo-user" },
+        if (
+          credentials?.username === "demo" &&
+          credentials?.password === "demo"
+        ) {
+          const demoUserId = "demo-user";
+          const demoUserEmail = "demo@example.com";
+
+          // Try to find the user by their ID
+          let user = await db.user.findUnique({
+            where: { id: demoUserId },
           });
-          
-          if (demoUser) {
-            return {
-              id: demoUser.id,
-              name: demoUser.name,
-              email: demoUser.email,
-              image: demoUser.image
-            };
+
+          if (!user) {
+            // User with demoUserId does not exist, so try to create them.
+            // First, check if the email is already taken by another user.
+            const existingUserWithEmail = await db.user.findUnique({
+              where: { email: demoUserEmail },
+            });
+
+            if (
+              existingUserWithEmail &&
+              existingUserWithEmail.id !== demoUserId
+            ) {
+              // The email "demo@example.com" is in use by a different user ID.
+              console.error(
+                `Cannot create demo user: email ${demoUserEmail} is already in use by user ${existingUserWithEmail.id}.`,
+              );
+              return null; // Prevent login due to conflict
+            }
+
+            // Proceed to create the demo user
+            try {
+              user = await db.user.create({
+                data: {
+                  id: demoUserId,
+                  name: "Demo User",
+                  email: demoUserEmail,
+                  image: null,
+                  // 'onboarded' will default to false as per the Prisma schema
+                },
+              });
+            } catch (error) {
+              console.error("Error creating demo user:", error);
+              return null; // Failed to create user
+            }
           }
-          
-          // If demo user doesn't exist in the database, return a basic user object
-          // The session callback will handle the ID
-          return {
-            id: "demo-user",
-            name: "Demo User",
-            email: "demo@example.com",
-            image: null
-          };
+          // Return the user object (either found or newly created)
+          return user;
         }
         return null;
-      }
+      },
     }),
     /**
      * ...add more providers here.
@@ -87,13 +112,13 @@ export const authConfig = {
   callbacks: {
     session: ({ session, user, token }) => {
       // Get the user ID from the user object, token, or use demo-user as fallback
-      const userId = user?.id || token?.sub || token?.id || "demo-user";
-      
+      const userId = user?.id ?? token?.sub ?? token?.id ?? "demo-user";
+
       return {
         ...session,
         user: {
           ...session.user,
-          id: userId as string,
+          id: userId,
         },
       };
     },
@@ -103,10 +128,6 @@ export const authConfig = {
       }
       return token;
     },
-    signIn: async ({ user }) => {
-      // Always allow sign-in
-      return true;
-    }
   },
   session: {
     strategy: "jwt",
